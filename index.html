@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Before and after slider</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    overflow: hidden;
+  }
+
+  .ba-container {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    aspect-ratio: 16 / 9;
+    margin: 0 auto;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  .ba-after {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .ba-before-wrap {
+    position: absolute;
+    inset: 0;
+    width: 50%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .ba-before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: var(--ba-full-width, 900px);
+    max-width: none;
+    object-fit: cover;
+  }
+
+  .ba-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 4px;
+    background: #ffffff;
+    cursor: ew-resize;
+    transform: translateX(-2px);
+  }
+
+  .ba-handle-grip {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ba-handle-grip svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .ba-label {
+    position: absolute;
+    bottom: 10px;
+    padding: 4px 10px;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    font-size: 13px;
+    border-radius: 3px;
+    pointer-events: none;
+  }
+
+  .ba-label-before { left: 10px; }
+  .ba-label-after { right: 10px; }
+
+</style>
+</head>
+<body>
+
+<div class="ba-container" id="baContainer">
+  <img class="ba-after" src="images/after.png" alt="After">
+
+  <div class="ba-text-cover" id="baTextCover"></div>
+
+  <div class="ba-before-wrap" id="baBeforeWrap">
+    <img class="ba-before" id="baBeforeImg" src="images/before.png" alt="Before">
+  </div>
+
+  <div class="ba-handle" id="baHandle">
+    <div class="ba-handle-grip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 6 3 12 9 18"></polyline>
+        <polyline points="15 6 21 12 15 18"></polyline>
+      </svg>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  var container = document.getElementById('baContainer');
+  var beforeWrap = document.getElementById('baBeforeWrap');
+  var beforeImg = document.getElementById('baBeforeImg');
+  var handle = document.getElementById('baHandle');
+  var textCover = document.getElementById('baTextCover');
+  var dragging = false;
+
+  function syncFullWidth() {
+    // Keeps the "before" image from squishing as its clipped wrapper shrinks.
+    var w = container.getBoundingClientRect().width;
+    beforeImg.style.setProperty('--ba-full-width', w + 'px');
+    beforeImg.style.width = w + 'px';
+  }
+
+  function setPosition(pct) {
+    pct = Math.max(0, Math.min(100, pct));
+    beforeWrap.style.width = pct + '%';
+    handle.style.left = pct + '%';
+    textCover.classList.toggle('ba-hidden', pct >= REVEAL_THRESHOLD);
+  }
+
+  function moveFromClientX(clientX) {
+    var rect = container.getBoundingClientRect();
+    var pct = ((clientX - rect.left) / rect.width) * 100;
+    setPosition(pct);
+  }
+
+  handle.addEventListener('mousedown', function () { dragging = true; });
+  window.addEventListener('mouseup', function () { dragging = false; });
+  window.addEventListener('mousemove', function (e) {
+    if (dragging) moveFromClientX(e.clientX);
+  });
+
+  handle.addEventListener('touchstart', function () { dragging = true; }, { passive: true });
+  window.addEventListener('touchend', function () { dragging = false; });
+  window.addEventListener('touchmove', function (e) {
+    if (dragging) moveFromClientX(e.touches[0].clientX);
+  }, { passive: true });
+
+  container.addEventListener('click', function (e) {
+    if (e.target === handle || handle.contains(e.target)) return;
+    moveFromClientX(e.clientX);
+  });
+
+  window.addEventListener('resize', syncFullWidth);
+  syncFullWidth();
+  setPosition(50);
+})();
+</script>
+
+</body>
+</html>
